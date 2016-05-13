@@ -1,0 +1,132 @@
+#!/usr/bin/env ruby
+#
+# = NAME
+#
+# blast2matrix
+#
+# = SYNOPSIS
+#
+# See below, in opt parser block.
+#
+# = USAGE
+#
+# See below, in opt parser block.
+#
+# = AUTHOR
+#
+# daniel.lundin@scilifelab.se
+
+$VERBOSE = true
+
+require 'optparse'
+
+FORMATS = {
+  'orfs' => { 
+    'call' => :orfscall, 
+    'desc' => 'Distance matrix between individual orfs calculated as 1-fraction of identity' ,
+    'mandopts' => [ ]
+  },
+  'contigs' => { 
+    'call' => :contigscall, 
+    'desc' => 'Distance matrix between contigs calculated as 1-the mean fraction of identity between individual orfs' ,
+    'mandopts' => [ ]
+  },
+}
+DEFAULT_FORMAT = 'orfs'
+
+def formats(format = false)
+  if format and FORMATS[format]
+    "#{format}: #{FORMATS[format]['desc']}\n"
+  elsif format and format != ''
+    "Format #{format} not supported\n"
+  else
+    "Supported formats:\n\t" + FORMATS.keys.sort.map { |f| "#{f}#{ f == DEFAULT_FORMAT ? ' * default *' : ''}" }.join("\n\t") + "\n"
+  end
+end
+
+@options = {
+  :format => DEFAULT_FORMAT
+}
+opt_parser = OptionParser.new do |opts|
+  opts.banner = <<BANNER
+blast2matrix: Converts a blast8 formated file to a distance matrix.
+  The distance matrix can either be between the sequences in the file 
+  (format 'orfs') or between higher level entities containing the sequences in
+  the file (format 'contigs').
+
+  blast2matrix [options] file0..filen
+BANNER
+
+  opts.on "--format=format", "Output format, default #{DEFAULT_FORMAT}"  do |v| 
+    @options[:format] = v 
+  end
+
+  opts.on "--formats[=v]", "Lists available output formats or, with a format as parameter, writes a description of a format"  do |v|
+    puts formats v 
+    exit 0
+  end
+
+  opts.on "-h", "--help", "This info"  do 
+    puts opts
+    exit 0
+  end
+
+  opts.on "-v", "--verbose", "Be verbose"  do |v| 
+    @options[:verbose] = v 
+  end
+end
+begin
+  opt_parser.parse!
+  mandatory = FORMATS[@options[:format]]['mandopts'] + [ ]	# Fill in with mandatory option names (i.e. starting with :)
+  missing = mandatory.select { |param| @options[param].nil? }
+  unless missing.empty?
+    warn "Missing options: #{missing.map { |m| "--#{m}" }.join(", ")}"
+    warn opt_parser
+    exit 1
+  end
+rescue OptionParser::InvalidOption, OptionParser::MissingArgument
+  warn "#{$!}"
+  warn opt_parser
+  exit 1
+end
+
+def contigscall(results)
+end
+
+def orfscall(results)
+end
+
+unless FORMATS.keys.find { |f| f == @options[:format] }
+  warn "Format #{@options[:format]} unsupported"
+  warn formats
+  exit 1
+end
+
+# Loop over infiles
+@results = nil
+begin
+  file = nil
+  ARGV.each do |file|
+    if file == '-'
+      warn "Parsing STDIN" if @options[:verbose]
+      io = STDIN
+    else
+      warn "Parsing #{file}" if @options[:verbose]
+      if file =~ /.gz$/
+	io = IO.popen("gunzip -c #{file}", "r")
+      elsif file =~ /.bz2$/
+
+	io = IO.popen("bunzip2 -c #{file}", "r")
+      else
+	io = File.new(file)
+      end
+    end
+    io.each do |line|
+    end
+  end
+rescue
+  warn "Failed to process file '#{file}': #{$!}, backtrace:\n\t#{$!.backtrace.join("\n\t")}"
+end
+
+# Print out the results
+self.method(FORMATS[@options[:format]]['call']).call(@results)
