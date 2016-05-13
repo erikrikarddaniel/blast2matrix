@@ -1,0 +1,7 @@
+sessionname blast2matrix
+setenv ROOT $PWD
+chdir test
+screen -t test
+chdir $ROOT
+screen -t man
+screen -t root
