@@ -150,16 +150,53 @@ rescue OptionParser::InvalidOption, OptionParser::MissingArgument
   exit 1
 end
 
-def contigscall(results)
+def contigscall(data)
 end
 
-def one_minuscall(results)
+def one_minuscall(data)
+  rtn = { }	# We will return a hash of hashes where each pair of sequences point to the distance between them
+
+  # First, we need the lengths. Can be found as the hit between each sequence and itself
+  # (might be problematic if blast was run with filters).
+  lens = { }
+  data.keys.uniq.each do |key|
+    lens[key] = 0
+    data[key][key].each do |r|
+      lens[key] += r[:len]
+    end
+  end
+
+  # Now we can calculate the matrix
+  data.keys.uniq.each do |seq0|
+    data.keys.uniq.each do |seq1|
+      n_id = 0.0
+      if hits = data[seq0][seq1]
+	# Calculate overall % identity, first count all identities and sum over all hits
+	hits.each do |hit|
+	  n_id += hit[:id]*hit[:len]
+	end
+      end
+      rtn[seq0] ||= { }
+      rtn[seq0][seq1] = 1 - n_id/lens[seq0]
+    end
+  end
+      
+  return rtn
 end
 
-def orfscall(results)
+def orfscall(data)
+  return data
 end
 
-def tsvcall(results)
+def tsvcall(data)
+  puts "\t" + data.keys.sort.join("\t")
+  data.keys.sort.each do |s0|
+    d = [ ]
+    data.keys.sort.each do |s1|
+      d << data[s0][s1]
+    end
+    puts "#{s0}\t" + d.join("\t")
+  end
 end
 
 unless FORMATS.keys.find { |f| f == @options[:format] }
@@ -169,7 +206,7 @@ unless FORMATS.keys.find { |f| f == @options[:format] }
 end
 
 # Loop over infiles
-@results = [ ]
+data = { }
 begin
   file = nil
   ARGV.each do |file|
@@ -191,13 +228,14 @@ begin
       line.sub!(/\s*#.*/, '')
       next if line =~ /^$/
       fields = line.chomp.split(/\s+/)
-      @results << {
-	query:      fields[0]         , target:   fields[1],
-	id:         fields[2].to_i/100, len:      fields[3].to_i,
-	mismatches: fields[4].to_i    , gapopens: fields[5].to_i,
-	qstart:     fields[6].to_i    , qend:     fields[7].to_i,
-	sstart:     fields[8].to_i    , send:     fields[9].to_i,
-	evalue:     fields[9].to_f    , bitscore: fields[10].to_f
+      data[fields[0]] ||= { }
+      data[fields[0]][fields[1]] ||= [ ]
+      data[fields[0]][fields[1]] << {
+	id:         fields[2].to_f/100.0, len:      fields[3].to_i,
+	mismatches: fields[4].to_i      , gapopens: fields[5].to_i,
+	qstart:     fields[6].to_i      , qend:     fields[7].to_i,
+	sstart:     fields[8].to_i      , send:     fields[9].to_i,
+	evalue:     fields[9].to_f      , bitscore: fields[10].to_f
       }
     end
   end
@@ -206,10 +244,10 @@ rescue
 end
 
 # Convert similarities to distances
-@results = self.method(SIM2DISTS[@options[:sim2dist]]['call']).call(@results)
+matrix = self.method(SIM2DISTS[@options[:sim2dist]]['call']).call(data)
 
 # Convert the matrix to represent distances between the specified entities
-@results = self.method(DISTANCES[@options[:distance]]['call']).call(@results)
+matrix = self.method(DISTANCES[@options[:distance]]['call']).call(matrix)
 
-# Print out the results
-self.method(FORMATS[@options[:format]]['call']).call(@results)
+# Print out the data
+self.method(FORMATS[@options[:format]]['call']).call(matrix)

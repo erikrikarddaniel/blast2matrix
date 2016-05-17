@@ -2,7 +2,7 @@ sessionname blast2matrix
 setenv ROOT $PWD
 chdir ruby_src
 screen -t ruby_src
-chdir test
+chdir $ROOT/test
 screen -t test
 chdir $ROOT
 screen -t man
