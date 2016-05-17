@@ -7,5 +7,5 @@ all: blast2matrix
 blast2matrix: blast2matrix.00
 
 blast2matrix.00:
-	../bin/blast2matrix --verbose --format=orfs $@.tsv > $@.out
-	$(CHECK)
+	../blast2matrix --verbose --distance=orfs --sim2dist=one_minus --format=tsv $@.blast8 > $@.out
+	@$(CHECK)

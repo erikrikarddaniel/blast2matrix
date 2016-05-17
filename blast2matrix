@@ -20,19 +20,38 @@ $VERBOSE = true
 
 require 'optparse'
 
-FORMATS = {
+DISTANCES = {
   'orfs' => { 
     'call' => :orfscall, 
-    'desc' => 'Distance matrix between individual orfs calculated as 1-fraction of identity' ,
+    'desc' => 'Distance matrix between individual orfs',
     'mandopts' => [ ]
   },
   'contigs' => { 
     'call' => :contigscall, 
-    'desc' => 'Distance matrix between contigs calculated as 1-the mean fraction of identity between individual orfs' ,
+    'desc' => 'Distance matrix between contigs calculated as the mean of included orfs',
     'mandopts' => [ ]
-  },
+  }
 }
-DEFAULT_FORMAT = 'orfs'
+DEFAULT_DISTANCE = 'orfs'
+
+def distances(distance = false)
+  if distance and DISTANCES[distance]
+    "#{distance}: #{DISTANCES[distance]['desc']}\n"
+  elsif distance and distance != ''
+    "Format #{distance} not supported\n"
+  else
+    "Supported distances:\n\t" + DISTANCES.keys.sort.map { |f| "#{f}#{ f == DEFAULT_DISTANCE ? ' * default *' : ''}" }.join("\n\t") + "\n"
+  end
+end
+
+FORMATS = {
+  'tsv' => {
+    'call' => :tsvcall,
+    'desc' => 'Tab separated table',
+    'mandopts' => [ ]
+  }
+}
+DEFAULT_FORMAT = 'tsv'
 
 def formats(format = false)
   if format and FORMATS[format]
@@ -44,18 +63,55 @@ def formats(format = false)
   end
 end
 
+SIM2DISTS = {
+  'one_minus' => {
+    'call' => :one_minuscall,
+    'desc' => '1 minus identity fraction',
+    'mandopts' => [ ]
+  }
+}
+DEFAULT_SIM2DIST = 'one_minus'
+
+def sim2dists(sim2dist = false)
+  if sim2dist and SIM2DISTS[sim2dist]
+    "#{sim2dist}: #{SIM2DISTS[sim2dist]['desc']}\n"
+  elsif sim2dist and sim2dist != ''
+    "Format #{sim2dist} not supported\n"
+  else
+    "Supported sim2dists:\n\t" + SIM2DISTS.keys.sort.map { |f| "#{f}#{ f == DEFAULT_SIM2DIST ? ' * default *' : ''}" }.join("\n\t") + "\n"
+  end
+end
+
 @options = {
-  :format => DEFAULT_FORMAT
+  :distance => DEFAULT_DISTANCE,
+  :format => DEFAULT_FORMAT,
+  :sim2dist => DEFAULT_SIM2DIST
 }
 opt_parser = OptionParser.new do |opts|
   opts.banner = <<BANNER
-blast2matrix: Converts a blast8 formated file to a distance matrix.
-  The distance matrix can either be between the sequences in the file 
-  (format 'orfs') or between higher level entities containing the sequences in
-  the file (format 'contigs').
+
+blast2matrix: Converts a blast8 formated file to a distance matrix.  
+  The distance matrix can either be between the sequences in the file
+  (--distances='orfs') or between higher level entities containing the
+  sequences in the file (--distances='contigs'). In the latter case, which 
+  orfs to group into a contig needs to be specified by **HOW**?
 
   blast2matrix [options] file0..filen
 BANNER
+
+  opts.on "--distance=distance", "Algorithm for distance calculation from fraction identity #{DEFAULT_DISTANCE}"  do |v| 
+    @options[:distance] = v 
+  end
+
+  opts.on "--distances[=v]", "Lists available distance calculation algorithms or, with a distance name as parameter, writes a description of a distance algorithm"  do |v|
+    puts distances v 
+    exit 0
+  end
+
+  opts.on "-h", "--help", "This info"  do 
+    puts opts
+    exit 0
+  end
 
   opts.on "--format=format", "Output format, default #{DEFAULT_FORMAT}"  do |v| 
     @options[:format] = v 
@@ -66,8 +122,12 @@ BANNER
     exit 0
   end
 
-  opts.on "-h", "--help", "This info"  do 
-    puts opts
+  opts.on "--sim2dist=sim2dist", "Algorithm to convert from similarity (fraction identity) to distances, default #{DEFAULT_SIM2DIST}"  do |v| 
+    @options[:sim2dist] = v 
+  end
+
+  opts.on "--sim2dists[=v]", "Lists available algorithms for conversion from identity fractions to distances, or, with a sim2dist as parameter, writes a description of a sim2dist"  do |v|
+    puts sim2dists v 
     exit 0
   end
 
@@ -93,7 +153,13 @@ end
 def contigscall(results)
 end
 
+def one_minuscall(results)
+end
+
 def orfscall(results)
+end
+
+def tsvcall(results)
 end
 
 unless FORMATS.keys.find { |f| f == @options[:format] }
@@ -103,7 +169,7 @@ unless FORMATS.keys.find { |f| f == @options[:format] }
 end
 
 # Loop over infiles
-@results = nil
+@results = [ ]
 begin
   file = nil
   ARGV.each do |file|
@@ -122,11 +188,28 @@ begin
       end
     end
     io.each do |line|
+      line.sub!(/\s*#.*/, '')
+      next if line =~ /^$/
+      fields = line.chomp.split(/\s+/)
+      @results << {
+	query:      fields[0]         , target:   fields[1],
+	id:         fields[2].to_i/100, len:      fields[3].to_i,
+	mismatches: fields[4].to_i    , gapopens: fields[5].to_i,
+	qstart:     fields[6].to_i    , qend:     fields[7].to_i,
+	sstart:     fields[8].to_i    , send:     fields[9].to_i,
+	evalue:     fields[9].to_f    , bitscore: fields[10].to_f
+      }
     end
   end
 rescue
   warn "Failed to process file '#{file}': #{$!}, backtrace:\n\t#{$!.backtrace.join("\n\t")}"
 end
+
+# Convert similarities to distances
+@results = self.method(SIM2DISTS[@options[:sim2dist]]['call']).call(@results)
+
+# Convert the matrix to represent distances between the specified entities
+@results = self.method(DISTANCES[@options[:distance]]['call']).call(@results)
 
 # Print out the results
 self.method(FORMATS[@options[:format]]['call']).call(@results)

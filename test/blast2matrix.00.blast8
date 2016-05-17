@@ -1,4 +1,4 @@
-Query id	Subject id	% identity	alignment length	mismatches	gap openings	q. start	q. end	s. start	s. end	e-value	bit score
+#Query id	Subject id	% identity	alignment length	mismatches	gap openings	q. start	q. end	s. start	s. end	e-value	bit score
 s0	s0	100.00	199	0	0	1	199	1	199	6e-136	 374
 s0	s1	43.75	16	9	0	89	104	369	384	7.0	17.3
 s1	s1	100.00	653	0	0	1	653	1	653	0.0	1329
