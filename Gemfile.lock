@@ -1,0 +1,34 @@
+GEM
+  remote: https://rubygems.org/
+  specs:
+    clbustos-rtf (0.4.2)
+    daru (0.1.3.1)
+      reportbuilder (~> 1.4)
+      spreadsheet (~> 1.1.1)
+    prawn (0.8.4)
+      prawn-core (>= 0.8.4, < 0.9)
+      prawn-layout (>= 0.8.4, < 0.9)
+      prawn-security (>= 0.8.4, < 0.9)
+    prawn-core (0.8.4)
+    prawn-layout (0.8.4)
+    prawn-security (0.8.4)
+    prawn-svg (0.9.1.11)
+      prawn (>= 0.8.4)
+    reportbuilder (1.4.2)
+      clbustos-rtf (~> 0.4.0)
+      prawn (~> 0.8.4)
+      prawn-svg (~> 0.9.1)
+      text-table (~> 1.2)
+    ruby-ole (1.2.12)
+    spreadsheet (1.1.2)
+      ruby-ole (>= 1.0)
+    text-table (1.2.4)
+
+PLATFORMS
+  ruby
+
+DEPENDENCIES
+  daru
+
+BUNDLED WITH
+   1.12.4
