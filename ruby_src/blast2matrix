@@ -20,6 +20,8 @@ $VERBOSE = true
 
 require 'optparse'
 
+require 'daru'
+
 DISTANCES = {
   'orfs' => { 
     'call' => :orfscall, 
