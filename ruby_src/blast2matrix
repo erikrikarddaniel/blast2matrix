@@ -22,7 +22,7 @@ require 'optparse'
 
 DISTANCES = {
   'orfs' => { 
-    'call' => :orfscall, 
+    'call' => :nullcall, 
     'desc' => 'Distance matrix between individual orfs',
     'mandopts' => [ ]
   },
@@ -82,10 +82,35 @@ def sim2dists(sim2dist = false)
   end
 end
 
+SYMMETRIES = {
+  'no' => {
+    'call' => :nullcall,
+    'desc' => 'No operation to make matrix symmetrical performed',
+    'mandopts' => [ ]
+  },
+  'mean' => {
+    'call' => :meansymcall,
+    'desc' => 'Calculate the mean of the two pairwise distances to make matrix symmetrical',
+    'mandopts' => [ ]
+  },
+}
+DEFAULT_SYMMETRY = 'no'
+
+def symmetries(symmetry = false)
+  if symmetry and SYMMETRIES[symmetry]
+    "#{symmetry}: #{SYMMETRIES[symmetry]['desc']}\n"
+  elsif symmetry and symmetry != ''
+    "Format #{symmetry} not supported\n"
+  else
+    "Supported symmetries:\n\t" + SYMMETRIES.keys.sort.map { |f| "#{f}#{ f == DEFAULT_SYMMETRY ? ' * default *' : ''}" }.join("\n\t") + "\n"
+  end
+end
+
 @options = {
   :distance => DEFAULT_DISTANCE,
   :format => DEFAULT_FORMAT,
-  :sim2dist => DEFAULT_SIM2DIST
+  :sim2dist => DEFAULT_SIM2DIST,
+  :symmetry => DEFAULT_SYMMETRY
 }
 opt_parser = OptionParser.new do |opts|
   opts.banner = <<BANNER
@@ -131,13 +156,26 @@ BANNER
     exit 0
   end
 
+  opts.on "--symmetry=symmetry", "Algorithm to convert from similarity (fraction identity) to distances, default #{DEFAULT_SYMMETRY}"  do |v| 
+    @options[:symmetry] = v 
+  end
+
+  opts.on "--symmetries[=v]", "Lists available algorithms for conversion from identity fractions to distances, or, with a symmetry as parameter, writes a description of a symmetry"  do |v|
+    puts symmetries v 
+    exit 0
+  end
+
   opts.on "-v", "--verbose", "Be verbose"  do |v| 
     @options[:verbose] = v 
   end
 end
 begin
   opt_parser.parse!
-  mandatory = FORMATS[@options[:format]]['mandopts'] + [ ]	# Fill in with mandatory option names (i.e. starting with :)
+  mandatory = [ ]	# Fill in with mandatory option names (i.e. starting with :)
+  mandatory += FORMATS[@options[:format]]['mandopts'] 
+  mandatory += DISTANCES[@options[:distance]]['mandopts']
+  mandatory += SIM2DISTS[@options[:sim2dist]]['mandopts']
+  mandatory += SYMMETRIES[@options[:symmetry]]['mandopts']
   missing = mandatory.select { |param| @options[param].nil? }
   unless missing.empty?
     warn "Missing options: #{missing.map { |m| "--#{m}" }.join(", ")}"
@@ -184,7 +222,23 @@ def one_minuscall(data)
   return rtn
 end
 
-def orfscall(data)
+def meansymcall(data)
+  rtn = { }
+  data.keys.uniq.each do |seq0|
+    rtn[seq0] ||= { }
+    data.keys.uniq.each do |seq1|
+      unless rtn[seq0][seq1]
+	m = (data[seq0][seq1]+data[seq1][seq0])/2
+	rtn[seq0][seq1] = m
+	rtn[seq1] ||= { }
+	rtn[seq1][seq0] = m
+      end
+    end
+  end
+  return rtn
+end
+
+def nullcall(data)
   return data
 end
 
@@ -248,6 +302,9 @@ matrix = self.method(SIM2DISTS[@options[:sim2dist]]['call']).call(data)
 
 # Convert the matrix to represent distances between the specified entities
 matrix = self.method(DISTANCES[@options[:distance]]['call']).call(matrix)
+
+# Make symmetric
+matrix = self.method(SYMMETRIES[@options[:symmetry]]['call']).call(matrix)
 
 # Print out the data
 self.method(FORMATS[@options[:format]]['call']).call(matrix)
