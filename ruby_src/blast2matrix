@@ -88,9 +88,19 @@ SYMMETRIES = {
     'desc' => 'No operation to make matrix symmetrical performed',
     'mandopts' => [ ]
   },
+  'max' => {
+    'call' => :maxsymcall,
+    'desc' => 'Calculate the max of the two pairwise distances to make matrix symmetrical',
+    'mandopts' => [ ]
+  },
   'mean' => {
     'call' => :meansymcall,
     'desc' => 'Calculate the mean of the two pairwise distances to make matrix symmetrical',
+    'mandopts' => [ ]
+  },
+  'min' => {
+    'call' => :minsymcall,
+    'desc' => 'Calculate the min of the two pairwise distances to make matrix symmetrical',
     'mandopts' => [ ]
   },
 }
@@ -188,9 +198,20 @@ rescue OptionParser::InvalidOption, OptionParser::MissingArgument
   exit 1
 end
 
+### Functions that performs various modifications to data. Which one is called
+### depends on command line arguments.
+
+# This one does nothing
+def nullcall(data)
+  return data
+end
+
+# Calculates distances between higher order entities, e.g. contigs, containing
+# several of the atomic entities, orfs.
 def contigscall(data)
 end
 
+# Calculate distances from similarities by taking 1 minus the similarity
 def one_minuscall(data)
   rtn = { }	# We will return a hash of hashes where each pair of sequences point to the distance between them
 
@@ -222,13 +243,14 @@ def one_minuscall(data)
   return rtn
 end
 
-def meansymcall(data)
+# Helper method for the various symmetry functions
+def _symcall(data)
   rtn = { }
   data.keys.uniq.each do |seq0|
     rtn[seq0] ||= { }
     data.keys.uniq.each do |seq1|
       unless rtn[seq0][seq1]
-	m = (data[seq0][seq1]+data[seq1][seq0])/2
+	m = yield data[seq0][seq1], data[seq1][seq0]
 	rtn[seq0][seq1] = m
 	rtn[seq1] ||= { }
 	rtn[seq1][seq0] = m
@@ -238,10 +260,22 @@ def meansymcall(data)
   return rtn
 end
 
-def nullcall(data)
-  return data
+# Returns a symmetric matrix based on the maximum pairwise distance
+def maxsymcall(data)
+  return _symcall(data) { |d0, d1| [ d0, d1 ].max }
 end
 
+# Returns a symmetric matrix based on the mean pairwise distance
+def meansymcall(data)
+  return _symcall(data) { |d0, d1| (d0+d1)/2 }
+end
+
+# Returns a symmetric matrix based on the minimum pairwise distance
+def minsymcall(data)
+  return _symcall(data) { |d0, d1| [ d0, d1 ].min }
+end
+
+# Print out the matrix i tab separated format
 def tsvcall(data)
   puts "\t" + data.keys.sort.join("\t")
   data.keys.sort.each do |s0|
