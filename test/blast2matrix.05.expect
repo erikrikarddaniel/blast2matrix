@@ -1,5 +1,4 @@
 #nexus
-
 BEGIN Taxa;
 DIMENSIONS ntax=10;
 TAXLABELS

@@ -45,6 +45,16 @@ def distances(distance = false)
 end
 
 FORMATS = {
+  'phylip' => {
+    'call' => :phylipcall,
+    'desc' => 'Tab separated table',
+    'mandopts' => [ ]
+  },
+  'splitstree' => {
+    'call' => :splitstreecall,
+    'desc' => 'Tab separated table',
+    'mandopts' => [ ]
+  },
   'tsv' => {
     'call' => :tsvcall,
     'desc' => 'Tab separated table',
@@ -275,15 +285,61 @@ def minsymcall(data)
   return _symcall(data) { |d0, d1| [ d0, d1 ].min }
 end
 
-# Print out the matrix i tab separated format
-def tsvcall(data)
-  puts "\t" + data.keys.sort.join("\t")
+# Print out the matrix 
+# Help method
+def _data_lines(data)
+  rtn = [ ]
   data.keys.sort.each do |s0|
     d = [ ]
     data.keys.sort.each do |s1|
       d << data[s0][s1]
     end
-    puts "#{s0}\t" + d.join("\t")
+    rtn << { seq: s0, values: d }
+  end
+  return rtn
+end
+
+# Phylip format
+def phylipcall(data)
+  puts data.keys.length
+  _data_lines(data).each do |line| 
+    puts "#{line[:seq]} #{line[:values].join(" ")}"
+  end
+end
+
+# Splitstree format
+def splitstreecall(data)
+  print <<HEAD
+#nexus
+BEGIN Taxa;
+DIMENSIONS ntax=#{data.keys.length};
+TAXLABELS
+HEAD
+  data.keys.sort.each_with_index do |s,i|
+    puts "[#{i+1}] '#{s}'"
+  end
+  print <<DIST
+;
+END; [Taxa]
+BEGIN Distances;
+DIMENSIONS ntax=#{data.keys.length};
+FORMAT labels=no diagonal triangle=both;
+MATRIX
+DIST
+  _data_lines(data).each do |line| 
+    puts " #{line[:values].join("\t")}"
+  end
+  print <<TAIL
+;
+END; [Distances]
+TAIL
+end
+
+# Tab separated format
+def tsvcall(data)
+  puts "\t" + data.keys.sort.join("\t")
+  _data_lines(data).each do |line| 
+    puts "#{line[:seq]}\t#{line[:values].join("\t")}"
   end
 end
 
