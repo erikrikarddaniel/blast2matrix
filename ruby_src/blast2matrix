@@ -29,7 +29,7 @@ DISTANCES = {
   'contigs' => { 
     'call' => :contigscall, 
     'desc' => 'Distance matrix between contigs calculated as the mean of included orfs',
-    'mandopts' => [ ]
+    'mandopts' => [ :orfs2contigs ]
   }
 }
 DEFAULT_DISTANCE = 'orfs'
@@ -126,9 +126,12 @@ def symmetries(symmetry = false)
   end
 end
 
+DEFAULT_IGNOREDISTGT = 1.0
+
 @options = {
   :distance => DEFAULT_DISTANCE,
   :format => DEFAULT_FORMAT,
+  :ignoredistgt => DEFAULT_IGNOREDISTGT,
   :sim2dist => DEFAULT_SIM2DIST,
   :symmetry => DEFAULT_SYMMETRY
 }
@@ -165,6 +168,14 @@ BANNER
   opts.on "--formats[=v]", "Lists available output formats or, with a format as parameter, writes a description of a format"  do |v|
     puts formats v 
     exit 0
+  end
+
+  opts.on "--ignoredistgt=float", "When converting orf to contig distances, distances larger than this value will be ignored in order not to penalize many orfs without counterpart, i.e. distance 1.0. Default #{DEFAULT_IGNOREDISTGT}" do |v|
+    @options[:ignoredistgt] = v.to_f
+  end
+
+  opts.on "--orfs2contigs=file.tsv", "File specifying which orfs each contig contains. Tab separated with contigs first on the line." do |v|
+    @options[:orfs2contigs] = v
   end
 
   opts.on "--sim2dist=sim2dist", "Algorithm to convert from similarity (fraction identity) to distances, default #{DEFAULT_SIM2DIST}"  do |v| 
@@ -217,8 +228,53 @@ def nullcall(data)
 end
 
 # Calculates distances between higher order entities, e.g. contigs, containing
-# several of the atomic entities, orfs.
+# several of the atomic entities, orfs. The calculation takes the mean of 
+# individual pairwise distances, excluding any distances longer than
+# @params[:ignoredistgt].
 def contigscall(data)
+  rtn = { }
+
+  # Read the file with contig composition
+  orfs2contigs = { }
+  contigs2orfs = { }
+  line = nil
+  fields = nil
+  begin
+    File.open(@options[:orfs2contigs]).each do |line|
+      line.chomp!
+      line.sub!(/\s*#.*/, '')
+      next if line =~ /^$/
+      fields = line.split("\t")
+      contigs2orfs[fields[0]] ||= [ ]
+      fields[1..-1].each do |orf|
+	orfs2contigs[orf] = fields[0]
+	contigs2orfs[fields[0]] << orf
+      end
+    end
+  rescue
+    warn "Failed to read orfs2contigs file (#{@options[:orfs2contigs]}, fields: #{fields}): #{$!}, backtrace:\n\t#{$!.backtrace.join("\n\t")}"
+    exit 2
+  end
+
+  # Loop over contigs and calculate distances
+  contigs2orfs.keys.sort.each do |c0|
+    rtn[c0] ||= { }
+    contigs2orfs.keys.sort.each do |c1|
+      if c0 == c1
+	rtn[c0][c1] = 0.0
+      else
+	distances = [ ]
+	contigs2orfs[c0].each do |c0orf|
+	  contigs2orfs[c1].each do |c1orf|
+	    distances << data[c0orf][c1orf] if data[c0orf][c1orf] < @options[:ignoredistgt]
+	  end
+	end
+	rtn[c0][c1] = distances.size > 0 ? distances.reduce(:+).to_f/distances.size : 1.0
+      end
+    end
+  end
+
+  return rtn
 end
 
 # Calculate distances from similarities by taking 1 minus the similarity
