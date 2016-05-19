@@ -2,6 +2,8 @@
 
 blast2matrix converts a blast8 formated input file into a pairwise distance file.
 
+The program is a Ruby script located in the `ruby_src` subdirectory.
+
 Distances are based on fraction identity between pairs, seen over the length of the query.
 Since fraction identity is a similarity score, distances are created by taking one minus
 the similarity. The script is open for other implementations.
@@ -16,4 +18,4 @@ threshold can be set on the command line.
 
 Currently there are three output formats: tab separated, phylip and splitstree (Nexus).
 
-See --help for instructions.
+See `--help` for instructions.
