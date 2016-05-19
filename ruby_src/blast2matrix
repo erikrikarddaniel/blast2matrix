@@ -448,12 +448,15 @@ rescue
 end
 
 # Convert similarities to distances
+warn "Converting with #{@options[:simdist]}" if @options[:verbose]
 matrix = self.method(SIM2DISTS[@options[:sim2dist]]['call']).call(data)
 
 # Convert the matrix to represent distances between the specified entities
+warn "Converting with #{@options[:distance]}" if @options[:verbose]
 matrix = self.method(DISTANCES[@options[:distance]]['call']).call(matrix)
 
 # Make symmetric
+warn "Making symmetric with #{@options[:symmetry]}" if @options[:verbose]
 matrix = self.method(SYMMETRIES[@options[:symmetry]]['call']).call(matrix)
 
 # Print out the data
