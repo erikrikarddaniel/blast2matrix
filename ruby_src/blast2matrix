@@ -266,7 +266,11 @@ def contigscall(data)
 	distances = [ ]
 	contigs2orfs[c0].each do |c0orf|
 	  contigs2orfs[c1].each do |c1orf|
-	    distances << data[c0orf][c1orf] if data[c0orf][c1orf] < @options[:ignoredistgt]
+	    if data[c0orf] && ( d = data[c0orf][c1orf] )
+	      distances << d if d < @options[:ignoredistgt]
+	    else
+	      warn "No distance between #{c0orf} and #{c1orf}" if @options[:verbose]
+	    end
 	  end
 	end
 	rtn[c0][c1] = distances.size > 0 ? distances.reduce(:+).to_f/distances.size : 1.0
