@@ -300,6 +300,7 @@ def one_minuscall(data)
     unless data[key][key]
       warn "No selfhit found for key '#{key}' -- something wrong in your input?\nCan't calculate length. Removing from matrix; won't be included in matrix."
       data.delete(key)
+      next
     end
     warn "#{__LINE__}: DEBUG: outer key: '#{key}'" if @options[:debug]
     data[key][key].each do |r|
