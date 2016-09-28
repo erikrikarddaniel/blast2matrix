@@ -1,3 +1,10 @@
 *.p??
 formatdb.log
 *.out
+*.bck
+*.des
+*.sds
+*.ssp
+*.suf
+*.tis
+err

@@ -4,7 +4,7 @@ CHECK = if [ ` $(DIFF) | wc -l ` -eq 0 ]; then echo "*** $@ OK ***"; else echo "
 
 all: blast2matrix
 
-blast2matrix: blast2matrix.00 blast2matrix.01 blast2matrix.02 blast2matrix.03 blast2matrix.04 blast2matrix.05 blast2matrix.06 blast2matrix.07 blast2matrix.08 blast2matrix.09
+blast2matrix: blast2matrix.00 blast2matrix.01 blast2matrix.02 blast2matrix.03 blast2matrix.04 blast2matrix.05 blast2matrix.06 blast2matrix.07 blast2matrix.08 blast2matrix.09 blast2matrix.10 blast2matrix.11
 
 blast2matrix.00:
 	@../ruby_src/blast2matrix --distance=orfs --sim2dist=one_minus --format=tsv $@.blast8 > $@.out
@@ -44,4 +44,12 @@ blast2matrix.08:
 
 blast2matrix.09:
 	@../ruby_src/blast2matrix --distance=contigs --orfs2contigs=$@.orfs2contigs.tsv --sim2dist=one_minus --format=splitstree --symmetry=mean $@.blast8 > $@.out
+	@$(CHECK)
+
+blast2matrix.10:
+	@../ruby_src/blast2matrix --distance=orfs --sim2dist=one_minus --format=tsv $@.last8 > $@.out
+	@$(CHECK)
+
+blast2matrix.11:
+	@../ruby_src/blast2matrix --distance=contigs --orfs2contigs=$@.orfs2contigs.tsv --sim2dist=one_minus --format=splitstree --symmetry=mean $@.last8 > $@.out
 	@$(CHECK)
