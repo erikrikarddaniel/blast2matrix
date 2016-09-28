@@ -147,6 +147,10 @@ blast2matrix: Converts a blast8 formated file to a distance matrix.
   blast2matrix [options] file0..filen
 BANNER
 
+  opts.on "-v", "--debug", "Output debug information"  do |v| 
+    @options[:debug] = v 
+  end
+
   opts.on "--distance=distance", "Algorithm for distance calculation from fraction identity #{DEFAULT_DISTANCE}"  do |v| 
     @options[:distance] = v 
   end
@@ -290,11 +294,11 @@ def one_minuscall(data)
   lens = { }
   data.keys.uniq.each do |key|
     lens[key] = 0
-    unless data[key][key] do
+    unless data[key][key]
       warn "No selfhit found for key '#{key}' -- something wrong in your input?\nCan't calculate length. Removing from matrix; won't be included in matrix."
       data.delete(key)
     end
-    warn "#{__LINE__}: DEBUG: outer key: '#{key}'"
+    warn "#{__LINE__}: DEBUG: outer key: '#{key}'" if @options[:debug]
     data[key][key].each do |r|
       lens[key] += r[:len]
     end
