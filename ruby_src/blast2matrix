@@ -204,6 +204,7 @@ BANNER
     @options[:verbose] = v 
   end
 end
+
 begin
   opt_parser.parse!
   mandatory = [ ]	# Fill in with mandatory option names (i.e. starting with :)
@@ -448,7 +449,7 @@ begin
 	mismatches: fields[4].to_i      , gapopens: fields[5].to_i,
 	qstart:     fields[6].to_i      , qend:     fields[7].to_i,
 	sstart:     fields[8].to_i      , send:     fields[9].to_i,
-	evalue:     fields[9].to_f      , bitscore: fields[10].to_f
+	evalue:     fields[10].to_f      , bitscore: fields[11].to_f
       }
     end
   end
