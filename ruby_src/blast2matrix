@@ -290,6 +290,11 @@ def one_minuscall(data)
   lens = { }
   data.keys.uniq.each do |key|
     lens[key] = 0
+    unless data[key][key] do
+      warn "No selfhit found for key '#{key}' -- something wrong in your input?\nCan't calculate length. Removing from matrix; won't be included in matrix."
+      data.delete(key)
+    end
+    warn "#{__LINE__}: DEBUG: outer key: '#{key}'"
     data[key][key].each do |r|
       lens[key] += r[:len]
     end
@@ -422,16 +427,16 @@ begin
       if file =~ /.gz$/
 	io = IO.popen("gunzip -c #{file}", "r")
       elsif file =~ /.bz2$/
-
 	io = IO.popen("bunzip2 -c #{file}", "r")
       else
 	io = File.new(file)
       end
     end
-    io.each do |line|
+    io.each_with_index do |line, i|
       line.sub!(/\s*#.*/, '')
       next if line =~ /^$/
       fields = line.chomp.split(/\s+/)
+      #warn "#{__LINE__}: DEBUG: line #{i}: Adding pair: '#{fields[0]}':'#{fields[1]}'"
       data[fields[0]] ||= { }
       data[fields[0]][fields[1]] ||= [ ]
       data[fields[0]][fields[1]] << {
