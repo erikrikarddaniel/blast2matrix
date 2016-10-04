@@ -229,6 +229,7 @@ end
 
 # This one does nothing
 def nullcall(data)
+  warn "`date`: Null call" if @options[:verbose]
   return data
 end
 
@@ -237,6 +238,7 @@ end
 # individual pairwise distances, excluding any distances longer than
 # @params[:ignoredistgt].
 def contigscall(data)
+  warn "`date`: Converting matrix to contig distance matrix" if @options[:verbose]
   rtn = { }
 
   # Read the file with contig composition
@@ -262,6 +264,7 @@ def contigscall(data)
   end
 
   # Loop over contigs and calculate distances
+  warn "`date`:\tRead orf to contig map, calculating distances" if @options[:verbose]
   contigs2orfs.keys.sort.each do |c0|
     rtn[c0] ||= { }
     contigs2orfs.keys.sort.each do |c1|
@@ -283,6 +286,8 @@ def contigscall(data)
     end
   end
 
+  warn "`date`: done" if @options[:verbose]
+
   return rtn
 end
 
@@ -295,11 +300,13 @@ def one_minuscall(data)
   # First, we need the lengths. Can be found as the hit between each sequence and itself
   # (might be problematic if blast was run with filters).
   lens = { }
+  warn "`date`:\tFinding lengths" if @options[:verbose]
   data.keys.uniq.each do |key|
     lens[key] = 0
     unless data[key][key]
       warn "No selfhit found for key '#{key}' -- something wrong in your input?\nCan't calculate length. Removing from matrix; won't be included in matrix."
       data.delete(key)
+      next
     end
     warn "#{__LINE__}: DEBUG: outer key: '#{key}'" if @options[:debug]
     data[key][key].each do |r|
@@ -309,6 +316,7 @@ def one_minuscall(data)
   #warn "#{__LINE__}: DEBUG: lens: #{lens}"
 
   # Now we can calculate the matrix
+  warn "`date`:\tCalculating distance matrix" if @options[:verbose]
   data.keys.uniq.each do |seq0|
     data.keys.uniq.each do |seq1|
       n_id = 0.0
@@ -325,6 +333,8 @@ def one_minuscall(data)
       #warn "#{__LINE__}: DEBUG: #{seq0}-#{seq1}=#{rtn[seq0][seq1]}"
     end
   end
+
+  warn "`date`: done" if @options[:verbose]
       
   return rtn
 end
@@ -348,17 +358,23 @@ end
 
 # Returns a symmetric matrix based on the maximum pairwise distance
 def maxsymcall(data)
+  warn "`date`: Making symmetrical with max function" if @options[:verbose]
   return _symcall(data) { |d0, d1| [ d0, d1 ].max }
+  warn "`date`: done" if @options[:verbose]
 end
 
 # Returns a symmetric matrix based on the mean pairwise distance
 def meansymcall(data)
+  warn "`date`: Making symmetrical with mean function" if @options[:verbose]
   return _symcall(data) { |d0, d1| (d0+d1)/2 }
+  warn "`date`: done" if @options[:verbose]
 end
 
 # Returns a symmetric matrix based on the minimum pairwise distance
 def minsymcall(data)
+  warn "`date`: Making symmetrical with min function" if @options[:verbose]
   return _symcall(data) { |d0, d1| [ d0, d1 ].min }
+  warn "`date`: done" if @options[:verbose]
 end
 
 # Print out the matrix 
@@ -377,14 +393,17 @@ end
 
 # Phylip format
 def phylipcall(data)
+  warn "`date`: Printing in phylip format" if @options[:verbose]
   puts data.keys.length
   _data_lines(data).each do |line| 
     puts "#{line[:seq]} #{line[:values].join(" ")}"
   end
+  warn "`date`: done" if @options[:verbose]
 end
 
 # Splitstree format
 def splitstreecall(data)
+  warn "`date`: Printing in splitstree format" if @options[:verbose]
   print <<HEAD
 #nexus
 BEGIN Taxa;
@@ -409,14 +428,17 @@ DIST
 ;
 END; [Distances]
 TAIL
+  warn "`date`: done" if @options[:verbose]
 end
 
 # Tab separated format
 def tsvcall(data)
+  warn "`date`: Printing in tsv format" if @options[:verbose]
   puts "\t" + data.keys.sort.join("\t")
   _data_lines(data).each do |line| 
     puts "#{line[:seq]}\t#{line[:values].join("\t")}"
   end
+  warn "`date`: done" if @options[:verbose]
 end
 
 unless FORMATS.keys.find { |f| f == @options[:format] }
