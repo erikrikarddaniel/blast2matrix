@@ -4,8 +4,10 @@ chdir ruby_src
 screen -t ruby_src
 chdir $ROOT/R_src
 screen -t R
-chdir $ROOT/test
-screen -t test
+chdir $ROOT/ruby_test
+screen -t ruby_test
+chdir $ROOT/r_test
+screen -t r_test
 chdir $ROOT
 screen -t man
 screen -t root

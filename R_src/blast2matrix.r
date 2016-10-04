@@ -6,12 +6,12 @@ suppressPackageStartupMessages(library(dtplyr))
 suppressPackageStartupMessages(library(readr))
 suppressPackageStartupMessages(library(tidyr))
 
-blast8file = '../test/blast2matrix.09.blast8'
-orfs2contigsfile = '../test/blast2matrix.09.orfs2contigs.tsv'
+args = commandArgs(trailingOnly = T)
 
+write(sprintf("%s: Reading blast8 file %s", format(Sys.time(), "%Y-%m-%d %H:%M:%S"), args[1]), stderr())
 blast = data.table(
     read_tsv(
-    blast8file, 
+    args[1], 
     col_names=c(
       'query', 'subject', 'percid', 'alignlen', 'mismatches', 'gapopen', 
       'qstart', 'qend', 'sstart', 'send', 'e_value', 'bitscore'
@@ -29,22 +29,26 @@ blast = data.table(
     transmute(query, subject, percid, alignlen, n_id=percid/100.0*alignlen),
   key = c('query', 'subject')
 )
+write(sprintf("%s: Read %d sequences, %d hits", format(Sys.time(), "%Y-%m-%d %H:%M:%S"), length(unique(blast$query)), length(blast$query)), stderr())
 
+write(sprintf("%s: Reading orfs2contigs file %s", format(Sys.time(), "%Y-%m-%d %H:%M:%S"), args[2]), stderr())
 orfs2contigs =  data.table(
   read_tsv(
-    orfs2contigsfile,
+    args[2],
     col_names = c('contig', 'seq'),
     col_types = c(contig = col_character(), query = col_character()),
     comment = '#'
   )
 )
 
+write(sprintf("%s: Calculating lengths", format(Sys.time(), "%Y-%m-%d %H:%M:%S")), stderr())
 lengths = blast %>% filter(query==subject) %>%
   group_by(query) %>%
   summarise(len=sum(alignlen)) %>%
   ungroup() %>%
   select(query, len)
 
+write(sprintf("%s: Calculating distances between sequences", format(Sys.time(), "%Y-%m-%d %H:%M:%S")), stderr())
 distances = data.table(
   blast %>%
     group_by(query, subject) %>%
@@ -56,6 +60,7 @@ distances = data.table(
   key = c('query', 'subject')
 )
 
+write(sprintf("%s: Calculating distances between contigs", format(Sys.time(), "%Y-%m-%d %H:%M:%S")), stderr())
 contigdists = data.table(
   distances %>%
     inner_join(orfs2contigs %>% select(qcontig = contig, query = seq), by = c('query')) %>%
@@ -73,6 +78,27 @@ contigdists = data.table(
 )
 
 # Make sure we get distances between all pairs
-alldists = data.table(expand.grid(qcontig=unique(contigdists$qcontig), scontig=unique(contigdists$qcontig))) %>%
+contigdists = data.table(expand.grid(qcontig=unique(contigdists$qcontig), scontig=unique(contigdists$qcontig))) %>%
   left_join(contigdists, by=c('qcontig', 'scontig')) %>%
   replace_na(list('similarity'=0.0, 'one_minus_dist'=1.0))
+
+widedists = contigdists %>% select(-similarity) %>%
+  spread(scontig, one_minus_dist, fill=1.0)
+
+write(sprintf("%s: Writing result to file", format(Sys.time(), "%Y-%m-%d %H:%M:%S")), stderr())
+cat("#nexus\n")
+cat("BEGIN Taxa;\n")
+cat(sprintf("DIMENSIONS ntax=%d;\n", length(widedists$qcontig)))
+cat("TAXLABELS\n")
+cat(sprintf("[%d] '%s'", 1:length(widedists$qcontig), widedists$qcontig), sep="\n")
+cat(";\n")
+cat("END; [Taxa]\n")
+cat("BEGIN Distances;\n")
+cat(sprintf("DIMENSIONS ntax=%d;\n", length(widedists$qcontig)))
+cat("FORMAT labels=no diagonal triangle=both;\n")
+cat("MATRIX\n")
+write.table(widedists %>% select(-qcontig), sep="\t", row.names=F, col.names=F)
+cat(";\n")
+cat("END; [Distances]\n")
+
+write(sprintf("%s: Done", format(Sys.time(), "%Y-%m-%d %H:%M:%S")), stderr())
