@@ -7,5 +7,5 @@ all: blast2matrix
 blast2matrix: blast2matrix.00
 
 blast2matrix.00:
-	@../R_src/blast2matrix.r --format=splitstree --orfs2contigs=$@.orfs2contigs.tsv --blast8file=$@.blast8 > $@.out
+	@../R_src/blast2matrix --format=splitstree --orfs2contigs=$@.orfs2contigs.tsv --blast8file=$@.blast8 > $@.out
 	@$(CHECK)
