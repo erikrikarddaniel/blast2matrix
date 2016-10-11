@@ -13,25 +13,44 @@
 suppressPackageStartupMessages(library(data.table))
 suppressPackageStartupMessages(library(dplyr))
 suppressPackageStartupMessages(library(dtplyr))
+suppressPackageStartupMessages(library(optparse))
 suppressPackageStartupMessages(library(readr))
 suppressPackageStartupMessages(library(tidyr))
 
 # Get arguments
-args = commandArgs(trailingOnly = T)
-blast8file       = args[1]
-orfs2contigsfile = args[2]
+option_list = list(
+  make_option(
+    c('--blast8file'),
+    type='character',
+    help='Name of file BLAST tabular file (-m 8); LAST\'s output also works'
+  ),
+  make_option(
+    c('--orfs2contigs'),
+    type='character',
+    help='Name of file with contig to orf mapping; format: contig<tab>orf'
+  ),
+  make_option(
+    c("-v", "--verbose"), 
+    action="store_true", 
+    default=FALSE, 
+    help="Print extra output [default]"
+  )
+)
+opt = parse_args(OptionParser(option_list=option_list))
 
 logmsg = function(msg, llevel='INFO') {
-  write(
-    sprintf("%s: %s: %s", llevel, format(Sys.time(), "%Y-%m-%d %H:%M:%S"), msg),
-    stderr()
-  )
+  if ( opt$verbose ) {
+    write(
+      sprintf("%s: %s: %s", llevel, format(Sys.time(), "%Y-%m-%d %H:%M:%S"), msg),
+      stderr()
+    )
+  }
 }
 
-logmsg(sprintf("Reading blast8 file %s", blast8file))
+logmsg(sprintf("Reading blast8 file %s", opt$blast8file))
 blast = data.table(
     read_tsv(
-    blast8file, 
+    opt$blast8file, 
     col_names=c(
       'query', 'subject', 'percid', 'alignlen', 'mismatches', 'gapopen', 
       'qstart', 'qend', 'sstart', 'send', 'e_value', 'bitscore'
@@ -51,10 +70,10 @@ blast = data.table(
 )
 logmsg(sprintf("Read %d sequences, %d hits", length(unique(blast$query)), length(blast$query)))
 
-logmsg(sprintf("Reading orfs2contigs file %s", orfs2contigsfile)) 
-orfs2contigs =  data.table(
+logmsg(sprintf("Reading opt$orfs2contigs file %s", opt$orfs2contigs)) 
+o2f =  data.table(
   read_tsv(
-    orfs2contigsfile,
+    opt$orfs2contigs,
     col_names = c('contig', 'seq'),
     col_types = c(contig = col_character(), query = col_character()),
     comment = '#'
@@ -83,8 +102,8 @@ distances = data.table(
 logmsg("Calculating distances between *contigs*")
 contigdists = data.table(
   distances %>%
-    inner_join(orfs2contigs %>% select(qcontig = contig, query = seq), by = c('query')) %>%
-    inner_join(orfs2contigs %>% select(scontig = contig, subject = seq), by = c('subject')) %>%
+    inner_join(o2f %>% select(qcontig = contig, query = seq), by = c('query')) %>%
+    inner_join(o2f %>% select(scontig = contig, subject = seq), by = c('subject')) %>%
     group_by(qcontig, scontig, query) %>%
     summarise(similarity=max(similarity), one_minus_dist=min(one_minus_dist)) %>%
     ungroup() %>%
