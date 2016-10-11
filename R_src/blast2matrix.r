@@ -1,17 +1,37 @@
 #!/usr/bin/env Rscript
 
+# blast2matrix.r
+#
+# Reads a file with the "-m 8" tabular BLAST output format (LAST's version is
+# also fine) and outputs a distance matrix, either from the entries in the
+# input file or from some mapping of those to something else (e.g. ORF to
+# contig).
+#
+# Author: daniel.lundin@lnu.se
+
+# Required packages
 suppressPackageStartupMessages(library(data.table))
 suppressPackageStartupMessages(library(dplyr))
 suppressPackageStartupMessages(library(dtplyr))
 suppressPackageStartupMessages(library(readr))
 suppressPackageStartupMessages(library(tidyr))
 
+# Get arguments
 args = commandArgs(trailingOnly = T)
+blast8file       = args[1]
+orfs2contigsfile = args[2]
 
-write(sprintf("%s: Reading blast8 file %s", format(Sys.time(), "%Y-%m-%d %H:%M:%S"), args[1]), stderr())
+logmsg = function(msg, llevel='INFO') {
+  write(
+    sprintf("%s: %s: %s", llevel, format(Sys.time(), "%Y-%m-%d %H:%M:%S"), msg),
+    stderr()
+  )
+}
+
+logmsg(sprintf("Reading blast8 file %s", blast8file))
 blast = data.table(
     read_tsv(
-    args[1], 
+    blast8file, 
     col_names=c(
       'query', 'subject', 'percid', 'alignlen', 'mismatches', 'gapopen', 
       'qstart', 'qend', 'sstart', 'send', 'e_value', 'bitscore'
@@ -29,26 +49,26 @@ blast = data.table(
     transmute(query, subject, percid, alignlen, n_id=percid/100.0*alignlen),
   key = c('query', 'subject')
 )
-write(sprintf("%s: Read %d sequences, %d hits", format(Sys.time(), "%Y-%m-%d %H:%M:%S"), length(unique(blast$query)), length(blast$query)), stderr())
+logmsg(sprintf("Read %d sequences, %d hits", length(unique(blast$query)), length(blast$query)))
 
-write(sprintf("%s: Reading orfs2contigs file %s", format(Sys.time(), "%Y-%m-%d %H:%M:%S"), args[2]), stderr())
+logmsg(sprintf("Reading orfs2contigs file %s", orfs2contigsfile)) 
 orfs2contigs =  data.table(
   read_tsv(
-    args[2],
+    orfs2contigsfile,
     col_names = c('contig', 'seq'),
     col_types = c(contig = col_character(), query = col_character()),
     comment = '#'
   )
 )
 
-write(sprintf("%s: Calculating lengths", format(Sys.time(), "%Y-%m-%d %H:%M:%S")), stderr())
+logmsg("Calculating lengths")
 lengths = blast %>% filter(query==subject) %>%
   group_by(query) %>%
   summarise(len=sum(alignlen)) %>%
   ungroup() %>%
   select(query, len)
 
-write(sprintf("%s: Calculating distances between sequences", format(Sys.time(), "%Y-%m-%d %H:%M:%S")), stderr())
+logmsg("Calculating distances between *sequences*")
 distances = data.table(
   blast %>%
     group_by(query, subject) %>%
@@ -60,7 +80,7 @@ distances = data.table(
   key = c('query', 'subject')
 )
 
-write(sprintf("%s: Calculating distances between contigs", format(Sys.time(), "%Y-%m-%d %H:%M:%S")), stderr())
+logmsg("Calculating distances between *contigs*")
 contigdists = data.table(
   distances %>%
     inner_join(orfs2contigs %>% select(qcontig = contig, query = seq), by = c('query')) %>%
@@ -85,7 +105,7 @@ contigdists = data.table(expand.grid(qcontig=unique(contigdists$qcontig), sconti
 widedists = contigdists %>% select(-similarity) %>%
   spread(scontig, one_minus_dist, fill=1.0)
 
-write(sprintf("%s: Writing result to file", format(Sys.time(), "%Y-%m-%d %H:%M:%S")), stderr())
+logmsg("Writing result")
 cat("#nexus\n")
 cat("BEGIN Taxa;\n")
 cat(sprintf("DIMENSIONS ntax=%d;\n", length(widedists$qcontig)))
@@ -101,4 +121,4 @@ write.table(widedists %>% select(-qcontig), sep="\t", row.names=F, col.names=F)
 cat(";\n")
 cat("END; [Distances]\n")
 
-write(sprintf("%s: Done", format(Sys.time(), "%Y-%m-%d %H:%M:%S")), stderr())
+logmsg("Done")
