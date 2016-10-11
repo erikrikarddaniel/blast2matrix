@@ -17,26 +17,40 @@ suppressPackageStartupMessages(library(optparse))
 suppressPackageStartupMessages(library(readr))
 suppressPackageStartupMessages(library(tidyr))
 
+FORMAT_SPLITSTREE = 'splitstree'
+FORMAT_TSV        = 'tsv'
+FORMAT_DEFAULT    = FORMAT_TSV
+FORMATS           = c(FORMAT_SPLITSTREE, FORMAT_TSV)
+
 # Get arguments
 option_list = list(
   make_option(
-    c('--blast8file'),
-    type='character',
+    c('--blast8file'), type='character',
     help='Name of file BLAST tabular file (-m 8); LAST\'s output also works'
   ),
   make_option(
-    c('--orfs2contigs'),
-    type='character',
+    c('--format'), type='character', default=FORMAT_DEFAULT,
+    help='Output format, default: [default]'
+  ),
+  make_option(
+    c('--formats'), action='store_true', default=FALSE,
+    help='Lists supported formats'
+  ),
+  make_option(
+    c('--orfs2contigs'), type='character',
     help='Name of file with contig to orf mapping; format: contig<tab>orf'
   ),
   make_option(
-    c("-v", "--verbose"), 
-    action="store_true", 
-    default=FALSE, 
-    help="Print extra output [default]"
+    c("-v", "--verbose"), action="store_true", default=FALSE, 
+    help="Print progress messages"
   )
 )
 opt = parse_args(OptionParser(option_list=option_list))
+
+if ( opt$formats ) {
+  write(cat("Supported formats: ", FORMATS, "\n"))
+  quit('no')
+}
 
 logmsg = function(msg, llevel='INFO') {
   if ( opt$verbose ) {
@@ -124,20 +138,26 @@ contigdists = data.table(expand.grid(qcontig=unique(contigdists$qcontig), sconti
 widedists = contigdists %>% select(-similarity) %>%
   spread(scontig, one_minus_dist, fill=1.0)
 
-logmsg("Writing result")
-cat("#nexus\n")
-cat("BEGIN Taxa;\n")
-cat(sprintf("DIMENSIONS ntax=%d;\n", length(widedists$qcontig)))
-cat("TAXLABELS\n")
-cat(sprintf("[%d] '%s'", 1:length(widedists$qcontig), widedists$qcontig), sep="\n")
-cat(";\n")
-cat("END; [Taxa]\n")
-cat("BEGIN Distances;\n")
-cat(sprintf("DIMENSIONS ntax=%d;\n", length(widedists$qcontig)))
-cat("FORMAT labels=no diagonal triangle=both;\n")
-cat("MATRIX\n")
-write.table(widedists %>% select(-qcontig), sep="\t", row.names=F, col.names=F)
-cat(";\n")
-cat("END; [Distances]\n")
+logmsg(sprintf("Writing result in % s format", opt$format))
+
+if ( opt$format == FORMAT_SPLITSTREE ) {
+  cat("#nexus\n")
+  cat("BEGIN Taxa;\n")
+  cat(sprintf("DIMENSIONS ntax=%d;\n", length(widedists$qcontig)))
+  cat("TAXLABELS\n")
+  cat(sprintf("[%d] '%s'", 1:length(widedists$qcontig), widedists$qcontig), sep="\n")
+  cat(";\n")
+  cat("END; [Taxa]\n")
+  cat("BEGIN Distances;\n")
+  cat(sprintf("DIMENSIONS ntax=%d;\n", length(widedists$qcontig)))
+  cat("FORMAT labels=no diagonal triangle=both;\n")
+  cat("MATRIX\n")
+  write.table(widedists %>% select(-qcontig), sep="\t", row.names=F, col.names=F)
+  cat(";\n")
+  cat("END; [Distances]\n")
+} else {
+  logmsg(sprintf("Format '%s' not supported, see --formats for supported formats", opt$format, llevel = 'ERROR'))
+  quit('no')
+}
 
 logmsg("Done")
