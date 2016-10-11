@@ -155,6 +155,8 @@ if ( opt$format == FORMAT_SPLITSTREE ) {
   write.table(widedists %>% select(-qcontig), sep="\t", row.names=F, col.names=F)
   cat(";\n")
   cat("END; [Distances]\n")
+} else if ( opt$format == FORMAT_TSV ) {
+  write.table(widedists, stdout(), sep='\t', row.names=F, quote=F)
 } else {
   logmsg(sprintf("Format '%s' not supported, see --formats for supported formats", opt$format, llevel = 'ERROR'))
   quit('no')
