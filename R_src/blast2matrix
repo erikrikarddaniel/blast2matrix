@@ -246,7 +246,7 @@ if ( opt$format == FORMAT_SPLITSTREE ) {
 } else if ( opt$format == FORMAT_TSV ) {
   write.table(widedists, stdout(), sep='\t', row.names=F, quote=F)
 } else if ( opt$format == FORMAT_ABC ) {
-  write.table(contigdists %>% arrange(qcontig, scontig), stdout(), sep='\t', row.names=F, quote=F)
+  write.table(contigdists %>% arrange(qcontig, scontig), stdout(), sep='\t', col.names=F, row.names=F, quote=F)
 } else {
   logmsg(sprintf("Format '%s' not supported, see --formats for supported formats", opt$format, llevel = 'ERROR'))
   quit('no')
