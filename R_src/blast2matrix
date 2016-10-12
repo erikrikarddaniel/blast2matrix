@@ -217,6 +217,10 @@ if ( opt$sim2dist == SIM2DIST_ONE_MINUS ) {
   widedists = contigdists %>%
     transmute(qcontig, scontig, value = 1 - similarity) %>%
     spread(scontig, value, fill=1.0)
+} else if ( opt$sim2dist == SIM2DIST_SIMILARITY ) {
+  widedists = contigdists %>%
+    transmute(qcontig, scontig, value = similarity) %>%
+    spread(scontig, value, fill=0.0)
 }
 
 logmsg(sprintf("Writing result in % s format", opt$format))
