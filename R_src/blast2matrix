@@ -17,10 +17,11 @@ suppressPackageStartupMessages(library(optparse))
 suppressPackageStartupMessages(library(readr))
 suppressPackageStartupMessages(library(tidyr))
 
+FORMAT_ABC        = 'abc'
 FORMAT_SPLITSTREE = 'splitstree'
 FORMAT_TSV        = 'tsv'
 FORMAT_DEFAULT    = FORMAT_TSV
-FORMATS           = c(FORMAT_SPLITSTREE, FORMAT_TSV)
+FORMATS           = c(FORMAT_ABC, FORMAT_SPLITSTREE, FORMAT_TSV)
 
 SIM2DIST_ONE_MINUS  = 'one_minus'
 SIM2DIST_SIMILARITY = 'similarity'
@@ -214,12 +215,14 @@ if ( opt$symmetry != SYMMETRY_NO ) {
 # Calculate the expected measurement and make wide (filling is different for distances and similarities)
 logmsg(sprintf("Converting to distances using the '%s' method", opt$sim2dist))
 if ( opt$sim2dist == SIM2DIST_ONE_MINUS ) {
+  contigdists = contigdists %>%
+    transmute(qcontig, scontig, value = 1 - similarity)
   widedists = contigdists %>%
-    transmute(qcontig, scontig, value = 1 - similarity) %>%
     spread(scontig, value, fill=1.0)
 } else if ( opt$sim2dist == SIM2DIST_SIMILARITY ) {
+  contigdists = contigdists %>%
+    transmute(qcontig, scontig, value = similarity)
   widedists = contigdists %>%
-    transmute(qcontig, scontig, value = similarity) %>%
     spread(scontig, value, fill=0.0)
 }
 
@@ -242,6 +245,8 @@ if ( opt$format == FORMAT_SPLITSTREE ) {
   cat("END; [Distances]\n")
 } else if ( opt$format == FORMAT_TSV ) {
   write.table(widedists, stdout(), sep='\t', row.names=F, quote=F)
+} else if ( opt$format == FORMAT_ABC ) {
+  write.table(contigdists %>% arrange(qcontig, scontig), stdout(), sep='\t', row.names=F, quote=F)
 } else {
   logmsg(sprintf("Format '%s' not supported, see --formats for supported formats", opt$format, llevel = 'ERROR'))
   quit('no')
