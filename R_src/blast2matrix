@@ -62,7 +62,7 @@ option_list = list(
   ),
   make_option(
     c('--symmetry'), type='character', default=SYMMETRY_DEFAULT,
-    help='Make the matrix symmetric by taking the mean of the two pairwise measurements, default [default]. See --symmetries for implemented methods.'
+    help="Make the matrix symmetric by taking the mean of the two pairwise measurements, default [default]. *NOTE* that this is applied *before* --sim2dist, so if you want min distance, use 'max' here. See --symmetries for implemented methods."
   ),
   make_option(
     c('--symmetries'), action='store_true', default=FALSE,
@@ -187,12 +187,26 @@ if ( opt$symmetry != SYMMETRY_NO ) {
     ) %>%
     ungroup()
 
-  if ( opt$symmetry == SYMMETRY_MEAN ) {
+  if ( opt$symmetry == SYMMETRY_MAX ) {
+    contigdists = c %>% separate(pair, c('qcontig', 'scontig'), sep=':::') %>%
+      transmute(qcontig, scontig, similarity = max) %>%
+      union(
+	c %>% separate(pair, c('scontig', 'qcontig'), sep=':::') %>%
+	  transmute(qcontig, scontig, similarity = max)
+      )
+  } else if ( opt$symmetry == SYMMETRY_MEAN ) {
     contigdists = c %>% separate(pair, c('qcontig', 'scontig'), sep=':::') %>%
       transmute(qcontig, scontig, similarity = mean) %>%
       union(
 	c %>% separate(pair, c('scontig', 'qcontig'), sep=':::') %>%
 	  transmute(qcontig, scontig, similarity = mean)
+      )
+  } else if ( opt$symmetry == SYMMETRY_MIN ) {
+    contigdists = c %>% separate(pair, c('qcontig', 'scontig'), sep=':::') %>%
+      transmute(qcontig, scontig, similarity = min) %>%
+      union(
+	c %>% separate(pair, c('scontig', 'qcontig'), sep=':::') %>%
+	  transmute(qcontig, scontig, similarity = min)
       )
   }
 }
