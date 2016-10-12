@@ -15,5 +15,5 @@ blast2matrix.01:
 	@$(CHECK)
 
 blast2matrix.02:
-	@../R_src/blast2matrix --transform=no --format=tsv --orfs2contigs=$@.orfs2contigs.tsv --blast8file=$@.blast8 > $@.out
+	@../R_src/blast2matrix --symmetry=mean --format=tsv --orfs2contigs=$@.orfs2contigs.tsv --blast8file=$@.blast8 > $@.out
 	@$(CHECK)

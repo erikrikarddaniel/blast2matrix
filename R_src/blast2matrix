@@ -22,6 +22,18 @@ FORMAT_TSV        = 'tsv'
 FORMAT_DEFAULT    = FORMAT_TSV
 FORMATS           = c(FORMAT_SPLITSTREE, FORMAT_TSV)
 
+SIM2DIST_ONE_MINUS  = 'one_minus'
+SIM2DIST_SIMILARITY = 'similarity'
+SIM2DIST_DEFAULT    = SIM2DIST_ONE_MINUS
+SIM2DISTS           = c(SIM2DIST_ONE_MINUS, SIM2DIST_SIMILARITY)
+
+SYMMETRY_MAX	  = 'max'
+SYMMETRY_MEAN	  = 'mean'
+SYMMETRY_MIN	  = 'min'
+SYMMETRY_NO	  = 'no'
+SYMMETRY_DEFAULT  = SYMMETRY_NO
+SYMMETRIES        = c(SYMMETRY_MAX, SYMMETRY_MEAN, SYMMETRY_MIN, SYMMETRY_NO)
+
 # Get arguments
 option_list = list(
   make_option(
@@ -41,6 +53,22 @@ option_list = list(
     help='Name of file with contig to orf mapping; format: contig<tab>orf'
   ),
   make_option(
+    c('--sim2dist'), type='character', default=SIM2DIST_DEFAULT,
+    help='Transformation method to turn similarities into distances, default: [default]. See --sim2dists for implemented methods.'
+  ),
+  make_option(
+    c('--sim2dists'), action='store_true', default=FALSE,
+    help='Lists supported sim2dists'
+  ),
+  make_option(
+    c('--symmetry'), type='character', default=SYMMETRY_DEFAULT,
+    help='Make the matrix symmetric by taking the mean of the two pairwise measurements, default [default]. See --symmetries for implemented methods.'
+  ),
+  make_option(
+    c('--symmetries'), action='store_true', default=FALSE,
+    help='Lists supported symmetries'
+  ),
+  make_option(
     c("-v", "--verbose"), action="store_true", default=FALSE, 
     help="Print progress messages"
   )
@@ -48,7 +76,17 @@ option_list = list(
 opt = parse_args(OptionParser(option_list=option_list))
 
 if ( opt$formats ) {
-  write(cat("Supported formats: ", FORMATS, "\n"))
+  write(cat("Supported formats:", FORMATS, "\n"))
+  quit('no')
+}
+
+if ( opt$sim2dists ) {
+  write(cat("Supported sim2dists:", SIM2DISTS, "\n"))
+  quit('no')
+}
+
+if ( opt$symmetries ) {
+  write(cat("Supported symmetries:", SYMMETRIES, "\n"))
   quit('no')
 }
 
@@ -108,8 +146,7 @@ distances = data.table(
     summarise(n_id = sum(n_id)) %>%
     ungroup() %>%
     inner_join(lengths, by='query') %>%
-    transmute(query, subject, similarity = n_id/len) %>%
-    mutate(one_minus_dist = ( 1 - similarity )),
+    transmute(query, subject, similarity = n_id/len),
   key = c('query', 'subject')
 )
 
@@ -119,13 +156,10 @@ contigdists = data.table(
     inner_join(o2f %>% select(qcontig = contig, query = seq), by = c('query')) %>%
     inner_join(o2f %>% select(scontig = contig, subject = seq), by = c('subject')) %>%
     group_by(qcontig, scontig, query) %>%
-    summarise(similarity=max(similarity), one_minus_dist=min(one_minus_dist)) %>%
+    summarise(similarity=max(similarity)) %>%
     ungroup() %>%
     group_by(qcontig, scontig) %>%
-    summarise(
-      similarity = mean(similarity),
-      one_minus_dist = mean(one_minus_dist)
-    ) %>%
+    summarise(similarity = mean(similarity)) %>%
     ungroup(),
   key = c('qcontig', 'scontig')
 )
@@ -133,10 +167,43 @@ contigdists = data.table(
 # Make sure we get distances between all pairs
 contigdists = data.table(expand.grid(qcontig=unique(contigdists$qcontig), scontig=unique(contigdists$qcontig))) %>%
   left_join(contigdists, by=c('qcontig', 'scontig')) %>%
-  replace_na(list('similarity'=0.0, 'one_minus_dist'=1.0))
+  replace_na(list('similarity'=0.0))
 
-widedists = contigdists %>% select(-similarity) %>%
-  spread(scontig, one_minus_dist, fill=1.0)
+# Make symmetric, if called for
+logmsg(sprintf("Applying symmetry transformation '%s'", opt$symmetry))
+if ( opt$symmetry != SYMMETRY_NO ) {
+  c = contigdists %>%
+    transmute(
+      contig0 = ifelse(qcontig >= scontig, qcontig, scontig),
+      contig1 = ifelse(qcontig < scontig, qcontig, scontig),
+      similarity
+    ) %>%
+    unite(pair, contig0, contig1, sep = ':::') %>%
+    group_by(pair) %>%
+    summarise(
+      max = max(similarity),
+      mean = mean(similarity),
+      min = min(similarity)
+    ) %>%
+    ungroup()
+
+  if ( opt$symmetry == SYMMETRY_MEAN ) {
+    contigdists = c %>% separate(pair, c('qcontig', 'scontig'), sep=':::') %>%
+      transmute(qcontig, scontig, similarity = mean) %>%
+      union(
+	c %>% separate(pair, c('scontig', 'qcontig'), sep=':::') %>%
+	  transmute(qcontig, scontig, similarity = mean)
+      )
+  }
+}
+
+# Calculate the expected measurement and make wide (filling is different for distances and similarities)
+logmsg(sprintf("Converting to distances using the '%s' method", opt$sim2dist))
+if ( opt$sim2dist == SIM2DIST_ONE_MINUS ) {
+  widedists = contigdists %>%
+    transmute(qcontig, scontig, value = 1 - similarity) %>%
+    spread(scontig, value, fill=1.0)
+}
 
 logmsg(sprintf("Writing result in % s format", opt$format))
 
