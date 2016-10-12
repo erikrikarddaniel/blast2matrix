@@ -1,0 +1,82 @@
+qcontig	scontig	similarity
+Acinetobacter phage 133 AAT	Acinetobacter phage 133 AAT	0.0
+Acinetobacter phage 133 ADJ	Acinetobacter phage 133 AAT	0.918355685020907
+Acinetobacter phage 133 refseq	Acinetobacter phage 133 AAT	0.654371701455237
+Citrobacter phage IME-CF2 AKR	Acinetobacter phage 133 AAT	0.736105880843798
+Citrobacter phage IME-CF2 refseq	Acinetobacter phage 133 AAT	0.75432855535257
+Enterobacter phage phiEap-3 ALA	Acinetobacter phage 133 AAT	0.772378666666667
+Prochlorococcus phage P-SSM5 ACD	Acinetobacter phage 133 AAT	1.0
+Prochlorococcus phage P-SSM5 AGN	Acinetobacter phage 133 AAT	0.754773333333333
+T4Tp026.top100.faa ADJ	Acinetobacter phage 133 AAT	0.768199045688813
+Acinetobacter phage 133 AAT	Acinetobacter phage 133 ADJ	0.918355685020907
+Acinetobacter phage 133 ADJ	Acinetobacter phage 133 ADJ	0.0
+Acinetobacter phage 133 refseq	Acinetobacter phage 133 ADJ	0.0719911237464582
+Citrobacter phage IME-CF2 AKR	Acinetobacter phage 133 ADJ	0.619718187213039
+Citrobacter phage IME-CF2 refseq	Acinetobacter phage 133 ADJ	0.667698048071637
+Enterobacter phage phiEap-3 ALA	Acinetobacter phage 133 ADJ	0.631030098522168
+Prochlorococcus phage P-SSM5 ACD	Acinetobacter phage 133 ADJ	0.685754285714286
+Prochlorococcus phage P-SSM5 AGN	Acinetobacter phage 133 ADJ	0.757142761904762
+T4Tp026.top100.faa ADJ	Acinetobacter phage 133 ADJ	0.368588105180428
+Acinetobacter phage 133 AAT	Acinetobacter phage 133 refseq	0.654371701455237
+Acinetobacter phage 133 ADJ	Acinetobacter phage 133 refseq	0.0719911237464582
+Acinetobacter phage 133 refseq	Acinetobacter phage 133 refseq	0.0
+Citrobacter phage IME-CF2 AKR	Acinetobacter phage 133 refseq	0.62223136338846
+Citrobacter phage IME-CF2 refseq	Acinetobacter phage 133 refseq	0.60984299328127
+Enterobacter phage phiEap-3 ALA	Acinetobacter phage 133 refseq	0.640880689655172
+Prochlorococcus phage P-SSM5 ACD	Acinetobacter phage 133 refseq	0.685754285714286
+Prochlorococcus phage P-SSM5 AGN	Acinetobacter phage 133 refseq	0.787619619047619
+T4Tp026.top100.faa ADJ	Acinetobacter phage 133 refseq	0.395720225199458
+Acinetobacter phage 133 AAT	Citrobacter phage IME-CF2 AKR	0.736105880843798
+Acinetobacter phage 133 ADJ	Citrobacter phage IME-CF2 AKR	0.619718187213039
+Acinetobacter phage 133 refseq	Citrobacter phage IME-CF2 AKR	0.62223136338846
+Citrobacter phage IME-CF2 AKR	Citrobacter phage IME-CF2 AKR	0.0
+Citrobacter phage IME-CF2 refseq	Citrobacter phage IME-CF2 AKR	0.0
+Enterobacter phage phiEap-3 ALA	Citrobacter phage IME-CF2 AKR	0.284380625
+Prochlorococcus phage P-SSM5 ACD	Citrobacter phage IME-CF2 AKR	0.542902857142857
+Prochlorococcus phage P-SSM5 AGN	Citrobacter phage IME-CF2 AKR	0.747898403361344
+T4Tp026.top100.faa ADJ	Citrobacter phage IME-CF2 AKR	0.410402237592934
+Acinetobacter phage 133 AAT	Citrobacter phage IME-CF2 refseq	0.75432855535257
+Acinetobacter phage 133 ADJ	Citrobacter phage IME-CF2 refseq	0.667698048071637
+Acinetobacter phage 133 refseq	Citrobacter phage IME-CF2 refseq	0.60984299328127
+Citrobacter phage IME-CF2 AKR	Citrobacter phage IME-CF2 refseq	0.0
+Citrobacter phage IME-CF2 refseq	Citrobacter phage IME-CF2 refseq	0.0
+Enterobacter phage phiEap-3 ALA	Citrobacter phage IME-CF2 refseq	0.376043640552995
+Prochlorococcus phage P-SSM5 ACD	Citrobacter phage IME-CF2 refseq	0.542902857142857
+Prochlorococcus phage P-SSM5 AGN	Citrobacter phage IME-CF2 refseq	0.790179732142857
+T4Tp026.top100.faa ADJ	Citrobacter phage IME-CF2 refseq	0.410402237592934
+Acinetobacter phage 133 AAT	Enterobacter phage phiEap-3 ALA	0.772378666666667
+Acinetobacter phage 133 ADJ	Enterobacter phage phiEap-3 ALA	0.631030098522168
+Acinetobacter phage 133 refseq	Enterobacter phage phiEap-3 ALA	0.640880689655172
+Citrobacter phage IME-CF2 AKR	Enterobacter phage phiEap-3 ALA	0.284380625
+Citrobacter phage IME-CF2 refseq	Enterobacter phage phiEap-3 ALA	0.376043640552995
+Enterobacter phage phiEap-3 ALA	Enterobacter phage phiEap-3 ALA	0.0
+Prochlorococcus phage P-SSM5 ACD	Enterobacter phage phiEap-3 ALA	1.0
+Prochlorococcus phage P-SSM5 AGN	Enterobacter phage phiEap-3 ALA	0.742860571428571
+T4Tp026.top100.faa ADJ	Enterobacter phage phiEap-3 ALA	0.662707222222222
+Acinetobacter phage 133 AAT	Prochlorococcus phage P-SSM5 ACD	1.0
+Acinetobacter phage 133 ADJ	Prochlorococcus phage P-SSM5 ACD	0.685754285714286
+Acinetobacter phage 133 refseq	Prochlorococcus phage P-SSM5 ACD	0.685754285714286
+Citrobacter phage IME-CF2 AKR	Prochlorococcus phage P-SSM5 ACD	0.542902857142857
+Citrobacter phage IME-CF2 refseq	Prochlorococcus phage P-SSM5 ACD	0.542902857142857
+Enterobacter phage phiEap-3 ALA	Prochlorococcus phage P-SSM5 ACD	1.0
+Prochlorococcus phage P-SSM5 ACD	Prochlorococcus phage P-SSM5 ACD	0.0
+Prochlorococcus phage P-SSM5 AGN	Prochlorococcus phage P-SSM5 ACD	1.0
+T4Tp026.top100.faa ADJ	Prochlorococcus phage P-SSM5 ACD	1.0
+Acinetobacter phage 133 AAT	Prochlorococcus phage P-SSM5 AGN	0.754773333333333
+Acinetobacter phage 133 ADJ	Prochlorococcus phage P-SSM5 AGN	0.757142761904762
+Acinetobacter phage 133 refseq	Prochlorococcus phage P-SSM5 AGN	0.787619619047619
+Citrobacter phage IME-CF2 AKR	Prochlorococcus phage P-SSM5 AGN	0.747898403361344
+Citrobacter phage IME-CF2 refseq	Prochlorococcus phage P-SSM5 AGN	0.790179732142857
+Enterobacter phage phiEap-3 ALA	Prochlorococcus phage P-SSM5 AGN	0.742860571428571
+Prochlorococcus phage P-SSM5 ACD	Prochlorococcus phage P-SSM5 AGN	1.0
+Prochlorococcus phage P-SSM5 AGN	Prochlorococcus phage P-SSM5 AGN	0.0
+T4Tp026.top100.faa ADJ	Prochlorococcus phage P-SSM5 AGN	0.771421714285714
+Acinetobacter phage 133 AAT	T4Tp026.top100.faa ADJ	0.768199045688813
+Acinetobacter phage 133 ADJ	T4Tp026.top100.faa ADJ	0.368588105180428
+Acinetobacter phage 133 refseq	T4Tp026.top100.faa ADJ	0.395720225199458
+Citrobacter phage IME-CF2 AKR	T4Tp026.top100.faa ADJ	0.410402237592934
+Citrobacter phage IME-CF2 refseq	T4Tp026.top100.faa ADJ	0.410402237592934
+Enterobacter phage phiEap-3 ALA	T4Tp026.top100.faa ADJ	0.662707222222222
+Prochlorococcus phage P-SSM5 ACD	T4Tp026.top100.faa ADJ	1.0
+Prochlorococcus phage P-SSM5 AGN	T4Tp026.top100.faa ADJ	0.771421714285714
+T4Tp026.top100.faa ADJ	T4Tp026.top100.faa ADJ	0.0
