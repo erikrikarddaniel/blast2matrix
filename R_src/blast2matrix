@@ -128,14 +128,14 @@ o2f = read_tsv(
 )
 
 logmsg("Calculating lengths")
-lengths = blast %>% filter(query==subject) %>%
+lengths <- blast %>% filter(query==subject) %>%
   group_by(query) %>%
   summarise(len=sum(alignlen)) %>%
   ungroup() %>%
   select(query, len)
 
 logmsg("Calculating distances between *sequences*")
-distances = blast %>%
+distances <- blast %>%
   group_by(query, subject) %>%
   summarise(n_id = sum(n_id)) %>%
   ungroup() %>%
@@ -143,7 +143,7 @@ distances = blast %>%
   transmute(query, subject, similarity = n_id/len)
 
 logmsg("Calculating distances between *contigs*")
-contigdists = distances %>%
+contigdists <- distances %>%
   inner_join(o2f %>% select(qcontig = contig, query = seq), by = c('query')) %>%
   inner_join(o2f %>% select(scontig = contig, subject = seq), by = c('subject')) %>%
   group_by(qcontig, scontig, query) %>%
@@ -154,7 +154,11 @@ contigdists = distances %>%
   ungroup()
 
 # Make sure we get distances between all pairs
-contigdists = expand.grid(qcontig=unique(contigdists$qcontig), scontig=unique(contigdists$qcontig)) %>%
+contigdists <- expand.grid(
+  qcontig=unique(contigdists$qcontig), 
+  scontig=unique(contigdists$qcontig),
+  stringsAsFactors = FALSE
+) %>%
   left_join(contigdists, by=c('qcontig', 'scontig')) %>%
   replace_na(list('similarity'=0.0))
 
