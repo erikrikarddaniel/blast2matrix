@@ -9,5 +9,6 @@ screen -t ruby_test
 chdir $ROOT/r_test
 screen -t r_test
 chdir $ROOT
+screen -t rstudio
 screen -t man
 screen -t root
